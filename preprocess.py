@@ -1,16 +1,17 @@
 import pandas as pd
 
-# Load the data
+# Load the CSV file
 df = pd.read_csv('btc_historical_data.csv')
 
-# Convert timestamp to datetime
-df['timestamp'] = pd.to_datetime(df['timestamp'])
+# Convert 'time' to datetime
+df['time'] = pd.to_datetime(df['time'])
 
-# Keeping only the relevant columns
-df = df[['timestamp', 'quote.USD.close']]
+# Select relevant columns
+df = df[['time', 'close']]
 df.columns = ['timestamp', 'close']
 
-# Check for null values in data
+# Drop any rows with missing values
 df = df.dropna()
 
-print(df.head())
+# Save the preprocessed data
+df.to_csv('btc_preprocessed_data.csv', index=False)
