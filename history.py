@@ -1,32 +1,35 @@
 import requests
 import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
-# Pull API key
-API_KEY = '4a0a4cd7-2c3e-4138-bdef-bc11a154ece3'
-BASE_URL = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/historical'
+API_KEY = 'a05f9e262c3019e6298c762e7b5911eb263ca30b3654f58f9b2ed4a8062d4c2c'
+BASE_URL = 'https://min-api.cryptocompare.com/data/v2/histoday'
 
-def fetch_historical_data(symbol, start_date, end_date, interval='daily'):
+def fetch_historical_data(symbol, start_date, end_date):
     headers = {
-        'X-CMC_PRO_API_KEY': API_KEY
+        'Authorization': f'Apikey {API_KEY}'
     }
     params = {
-        'symbol': symbol,
-        'time_start': start_date,
-        'time_end': end_date,
-        'interval': interval
+        'fsym': symbol,
+        'tsym': 'USD',
+        'limit': 2000,  # Max number of data points per request
+        'toTs': end_date,
+        'since': start_date
     }
     response = requests.get(BASE_URL, headers=headers, params=params)
     data = response.json()
     return data
 
 def save_data(data, filename):
-    df = pd.DataFrame(data['data']['quotes'])
-    df['timestamp'] = pd.to_datetime(df['timestamp'])
-    df.to_csv(filename, index=False)
+    if 'Data' in data and 'Data' in data['Data']:
+        df = pd.DataFrame(data['Data']['Data'])
+        df['time'] = pd.to_datetime(df['time'], unit='s')
+        df.to_csv(filename, index=False)
+    else:
+        print("Error: Unexpected data format")
+        print(data)
 
-# Fetch data for the last year
-end_date = datetime.utcnow()
-start_date = end_date - timedelta(days=365)
-data = fetch_historical_data('BTC', start_date.isoformat(), end_date.isoformat())
+end_date = datetime.now(timezone.utc).timestamp()
+start_date = (datetime.now(timezone.utc) - timedelta(days=365)).timestamp()
+data = fetch_historical_data('BTC', start_date, end_date)
 save_data(data, 'btc_historical_data.csv')
